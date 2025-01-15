@@ -82,9 +82,23 @@ export const otpVerifySchema = Joi.object({
 
 // Validation schema for login
 export const loginSchema = Joi.object({
-    email: Joi.string().email().required().messages({
-        'string.email': 'Email must be a valid email address.',
-        'any.required': 'Email is required.'
+    // email: Joi.string().email().required().messages({
+    //     'string.email': 'Email must be a valid email address.',
+    //     'any.required': 'Email is required.'
+    // }),
+    phone: Joi.string()
+    .pattern(/^\d{10}$/)
+    .required()
+    .messages({
+        'string.pattern.base': 'Phone number must contain only digits and be exactly 10 characters long.',
+        'any.required': 'Phone number is required.'
+    }),
+phone_code: Joi.string()
+    .pattern(/^\+\d{1,3}$/)
+    .required()
+    .messages({
+        'string.pattern.base': 'Phone code must start with "+" followed by 1 to 3 digits.',
+        'any.required': 'Phone code is required.'
     }),
     password: Joi.string().min(6).required().messages({
         'string.min': 'Password must be at least 6 characters long.',

@@ -1,117 +1,259 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import {JWT_SECRET,JWT_EXPIRES_IN} from '../config/environment.js';
+import { JWT_SECRET, JWT_EXPIRES_IN } from '../config/environment.js';
 import User from "../model/userModel.js";
-import College from "../model/collegeModel.js";
-import Artist from '../model/artistModel.js';  // Adjust the path as necessary
 import bcrypt from 'bcrypt';
-import {userSchema, otpVerifySchema, loginSchema, forgetPasswordSchema, resetPasswordSchema, changePasswordSchema} from '../helper/validation.js';
-// import { sendOtpToPhone } from '../helper/utility.js'; // Adjust path to the utility function
-// Controller to handle creating a new user
+import { userSchema, otpVerifySchema, loginSchema, forgetPasswordSchema, resetPasswordSchema, changePasswordSchema } from '../helper/validation.js';
+// import { sendOtpToPhone } from '../helper/utility.js'; 
 
 
 
 
-export const createUser = async (req: Request, res: Response) : Promise<any>=> {
+// without image uploading functionality 
+
+// export const createUser = async (req: Request, res: Response) : Promise<any>=> {
+//     const { error } = userSchema.validate(req.body);
+
+//     if (error) {
+//         return res.status(400).json({
+//             status: false,
+//             message: 'Validation error',
+//             data: {
+//                 error: error.details[0].message
+//             }
+//         });
+//     }
+
+//     try {
+//         const { email, password, first_name, last_name, phone, phone_code, date_of_birth, pronouns,device_id, device_token,device_type,timezone } = req.body;
+
+//         const checkUserSignupComplete = await User.findOne({phone,phone_code, email, is_signup_complete: true });
+//         if (checkUserSignupComplete) {
+//             return res.status(400).json({
+//                 status: false,
+//                 message: "Error creating user",
+//                 data: {
+//                     error: 'User already exists with this detail'
+//                 }
+//             });
+//         }
+
+//         const checkUserExistOrNot = await User.findOne({ phone: phone, phone_code: phone_code, email: email, is_signup_complete: false });
+
+//         let savedUser;
+//         const otp = Math.floor(100000 + Math.random() * 900000); // Generate 6-digit OTP
+//         const otpExpiryTime = new Date(Date.now() + 3 * 60 * 1000); // Set OTP expiry time to 3 minutes from now
+
+//         if (checkUserExistOrNot) {
+//             savedUser = checkUserExistOrNot;
+//             savedUser.phone_verified_otp = otp; // Update OTP in existing user's record
+//             savedUser.phone_otp_create_time = new Date(); // Set OTP creation time
+//             savedUser.phone_otp_expiry_time = otpExpiryTime; // Set OTP expiry time
+//             savedUser.updated_at = new Date();
+//             savedUser.device_id = device_id;
+//             savedUser.device_token = device_token;
+//             savedUser.device_type = device_type;
+//             savedUser.timezone = timezone;
+//             await savedUser.save(); // Save the updated user record
+//         } else {
+//             // Create a new user
+//             const newUser = new User({
+//                 login_type: "Phone",
+//                 password: password,
+//                 first_name: first_name,
+//                 last_name: last_name,
+//                 email: email,
+//                 phone: phone,
+//                 phone_code: phone_code,
+//                 date_of_birth: date_of_birth,
+//                 pronouns: pronouns,
+//                 device_id : device_id,
+//                 device_token : device_token,
+//                 device_type : device_type,
+//                 timezone : timezone,
+//             });
+//             newUser.phone_verified_otp = otp; // Save OTP in the new user's record
+//             newUser.phone_otp_create_time = new Date(); // Set OTP creation time
+//             newUser.phone_otp_expiry_time = otpExpiryTime; // Set OTP expiry time
+//             newUser.sigup_completion_percentage = '20%';
+//             savedUser = await newUser.save(); // Save the new user
+//         }
+
+//         // Send OTP via Twilio
+//         // await sendOtpToPhone(phone, phone_code, otp); 
+
+//         // Return success response with data
+//         res.status(200).json({
+//             status: true,
+//             message: "User created successfully. OTP sent to your mobile number.",
+//             data: {
+//                 otp: otp
+//             }
+//         });
+
+//     } catch (error) {
+//         console.error("Error creating user:", error);
+//         res.status(500).json({
+//             status: false,
+//             message: "Error creating user",
+//             data: {
+//                 error: error || "An error occurred"
+//             }
+//         });
+//     }
+// };
+
+
+export const createUser = async (req: Request, res: Response): Promise<any> => {
     const { error } = userSchema.validate(req.body);
 
     if (error) {
         return res.status(400).json({
             status: false,
-            message: 'Validation error',
+            message: "Validation error",
             data: {
-                error: error.details[0].message
-            }
+                error: error.details[0].message,
+            },
         });
     }
 
     try {
-        const { email, password, first_name, last_name, phone, phone_code, date_of_birth, pronouns,device_id, device_token,device_type,timezone } = req.body;
+        const { email, password, first_name, last_name, phone, phone_code, date_of_birth, pronouns, device_id, device_token, device_type, timezone } = req.body;
 
-        const checkUserSignupComplete = await User.findOne({ email, is_signup_complete: true });
+
+        //---------------------------- For Local Upload image---------------------------------//
+        console.log(req.file, req.body, 'body');
+        if (!req.file) {
+            return res.status(400).json({
+                status: false,
+                message: "Profile image is required.",
+                data: {
+                    error: "Profile image is required."
+                }
+            });
+        }
+        const profileImageName = req.file?.filename;
+
+        //---------------------------- For Local Upload image---------------------------------//
+
+
+        //---------------------- For AWS S3 Upload Image-----------------------------//
+
+
+        // const file = req.file as Express.MulterS3File;
+
+
+        // if (!file || !file.location) {
+        //     return res.status(400).json({
+        //         status: false,
+        //         message: "Profile image is required.",
+        //         data: {
+        //             error: "Profile image is required or upload failed.",
+        //         },
+        //     });
+        // }
+
+        // const profileImageName = req.file?.location ;  
+
+        //---------------------- For AWS S3 bucket name.-----------------------------//
+
+
+
+        const checkUserSignupComplete = await User.findOne({ phone, phone_code, email, is_signup_complete: true });
         if (checkUserSignupComplete) {
             return res.status(400).json({
                 status: false,
                 message: "Error creating user",
                 data: {
-                    error: 'User already exists with this detail'
-                }
+                    error: "User already exists with this detail",
+                },
             });
         }
 
-        const checkUserExistOrNot = await User.findOne({ phone: phone, phone_code: phone_code, is_signup_complete: false });
+        const checkUserExistOrNot = await User.findOne({ phone, phone_code, email, is_signup_complete: false });
 
         let savedUser;
-        const otp = Math.floor(100000 + Math.random() * 900000); // Generate 6-digit OTP
-        const otpExpiryTime = new Date(Date.now() + 3 * 60 * 1000); // Set OTP expiry time to 3 minutes from now
+        const otp = Math.floor(100000 + Math.random() * 900000);
+        const otpExpiryTime = new Date(Date.now() + 3 * 60 * 1000);
 
         if (checkUserExistOrNot) {
             savedUser = checkUserExistOrNot;
-            savedUser.phone_verified_otp = otp; // Update OTP in existing user's record
-            savedUser.phone_otp_create_time = new Date(); // Set OTP creation time
-            savedUser.phone_otp_expiry_time = otpExpiryTime; // Set OTP expiry time
+            savedUser.phone_verified_otp = otp;
+            savedUser.phone_otp_create_time = new Date();
+            savedUser.phone_otp_expiry_time = otpExpiryTime;
             savedUser.updated_at = new Date();
             savedUser.device_id = device_id;
             savedUser.device_token = device_token;
             savedUser.device_type = device_type;
             savedUser.timezone = timezone;
-            await savedUser.save(); // Save the updated user record
+
+
+            if (profileImageName) {
+                savedUser.profile_pic = profileImageName;
+            }
+
+            await savedUser.save();
         } else {
-            // Create a new user
+
             const newUser = new User({
                 login_type: "Phone",
-                password: password,
-                first_name: first_name,
-                last_name: last_name,
-                email: email,
-                phone: phone,
-                phone_code: phone_code,
-                date_of_birth: date_of_birth,
-                pronouns: pronouns,
-                device_id : device_id,
-                device_token : device_token,
-                device_type : device_type,
-                timezone : timezone,
+                password,
+                first_name,
+                last_name,
+                email,
+                phone,
+                phone_code,
+                date_of_birth,
+                pronouns,
+                device_id,
+                device_token,
+                device_type,
+                timezone,
+                phone_verified_otp: otp,
+                phone_otp_create_time: new Date(),
+                phone_otp_expiry_time: otpExpiryTime,
+                sigup_completion_percentage: "20%",
+                profile_pic: profileImageName,
             });
-            newUser.phone_verified_otp = otp; // Save OTP in the new user's record
-            newUser.phone_otp_create_time = new Date(); // Set OTP creation time
-            newUser.phone_otp_expiry_time = otpExpiryTime; // Set OTP expiry time
-            savedUser = await newUser.save(); // Save the new user
+
+            savedUser = await newUser.save();
         }
 
         // Send OTP via Twilio
+
         // await sendOtpToPhone(phone, phone_code, otp); 
 
-        // Return success response with data
+
         res.status(200).json({
             status: true,
             message: "User created successfully. OTP sent to your mobile number.",
             data: {
-                otp: otp
-            }
+                otp,
+            },
         });
-
     } catch (error) {
         console.error("Error creating user:", error);
         res.status(500).json({
             status: false,
             message: "Error creating user",
             data: {
-                error: error || "An error occurred"
-            }
+                error: error || "An error occurred",
+            },
         });
     }
 };
 
 
 
+
+
 export const verifyOtp = async (req: Request, res: Response): Promise<any> => {
     // Validate input
     const { error } = otpVerifySchema.validate(req.body);
-    
+
     if (error) {
         return res.status(400).json({
-            status: false,  
+            status: false,
             message: "Validation error",
             data: {
                 error: error.details[0].message
@@ -164,6 +306,8 @@ export const verifyOtp = async (req: Request, res: Response): Promise<any> => {
         user.phone_otp_create_time = null; // Clear the OTP creation time
         user.phone_otp_expiry_time = null; // Clear the OTP expiry time
         user.otp_verify_status = true;
+        user.sigup_completion_percentage = '30%';
+
         await user.save();
 
         console.log(JWT_EXPIRES_IN, 'in')
@@ -171,7 +315,7 @@ export const verifyOtp = async (req: Request, res: Response): Promise<any> => {
         const token = jwt.sign(
             { id: user._id, phone: user.phone },
             JWT_SECRET as string,
-            { expiresIn: JWT_EXPIRES_IN } 
+            { expiresIn: JWT_EXPIRES_IN }
         );
 
         return res.status(200).json({
@@ -194,104 +338,399 @@ export const verifyOtp = async (req: Request, res: Response): Promise<any> => {
 };
 
 
-export const completeProfile = async (req: Request, res: Response) : Promise<any> => {
-  try {
-    const userId = req.user.id; // Assuming `user` object from decoded JWT contains user ID
-    const {
-      favourite_genre,
-      favourite_interest,
-      zodiac_sign,
-      college,
-      major,
-      graduating_year,
-      clubs,
-      relationship_status,
-      favorite_artist,
-      favorite_show,
-      favorite_sports_team,
-      favorite_place_to_go,
-      facebook,
-      instagram,
-      twitter,
-      linkedin,
-      snapchat,
-      bio,
-    } = req.body;
+// export const completeProfile = async (req: Request, res: Response): Promise<any> => {
+//     try {
+//         const userId = req.user.id; 
+//         const {
+//             favourite_genre,
+//             favourite_interest,
+//             zodiac_sign,
+//             college,
+//             major,
+//             graduating_year,
+//             clubs,
+//             relationship_status,
+//             favorite_artist,
+//             favorite_show,
+//             favorite_sports_team,
+//             favorite_place_to_go,
+//             facebook,
+//             instagram,
+//             twitter,
+//             linkedin,
+//             snapchat,
+//             bio,
+//         } = req.body;
 
-    // Validate data (you can add more robust validation here)
-    if (bio && bio.length > 160) {
-      return res.status(400).json({
-        status: false,
-        message: "Bio should not exceed 160 characters.",
-      });
+//         // Validate data (you can add more robust validation here)
+//         if (bio && bio.length > 160) {
+//             return res.status(400).json({
+//                 status: false,
+//                 message: "Bio should not exceed 160 characters.",
+//                 data: {
+//                     error: "Bio should not exceed 160 characters."
+//                 }
+//             });
+//         }
+
+
+//         // Validate favourite_interest to ensure only 3 interests in total
+//         let totalInterests = 0;
+//         if (favourite_interest) {
+
+//             for (const category of favourite_interest) {
+//                 totalInterests += category.interests.length;
+//             }
+
+//             if (totalInterests > 3) {
+//                 return res.status(400).json({
+//                     status: false,
+//                     message: "You can only select a total of 3 interests across all categories.",
+//                     data: {
+//                         error: "You can only select a total of 3 interests across all categories."
+//                     }
+//                 });
+//             }
+
+//             for (const category of favourite_interest) {
+//                 if (category.interests.length > 3) {
+//                     return res.status(400).json({
+//                         status: false,
+//                         message: `You can only select up to 3 interests in the category: ${category.category}`,
+//                         data: {
+//                             error: `You can only select up to 3 interests in the category: ${category.category}`
+//                         }
+//                     });
+//                 }
+//             }
+//         }
+
+
+//         const user = await User.findById(userId);
+//         if (!user) {
+//             return res.status(404).json({
+//                 status: false,
+//                 message: "User not found.",
+//                 data: {
+//                     error: "User not found."
+//                 }
+//             });
+//         }
+
+     
+//         if (favourite_genre) {
+//             user.favourite_genre = favourite_genre;
+//             user.sigup_completion_percentage = "40%";
+//         }
+//         if (favourite_interest) {
+//             user.favourite_interests = favourite_interest;
+//             user.sigup_completion_percentage = "50%";
+
+//         }
+//         if (zodiac_sign) {
+//             user.zodiac_sign = zodiac_sign;
+//             user.sigup_completion_percentage = "60%";
+
+//         }
+//         if (college) {
+//             user.college = college;
+//             user.sigup_completion_percentage = "63%";
+
+//         }
+//         if (major) {
+//             user.major = major;
+//             user.sigup_completion_percentage = "66%";
+
+//         }
+//         if (graduating_year) {
+//             user.graduating_year = graduating_year;
+//             user.sigup_completion_percentage = "69%";
+
+//         }
+
+//         if (clubs) {
+//             user.clubs = clubs;
+//             user.sigup_completion_percentage = "72%";
+
+//         }
+//         if (relationship_status) {
+//             user.relationship_status = relationship_status;
+//             user.sigup_completion_percentage = "75%";
+
+//         }
+//         if (favorite_artist) {
+//             user.favorite_artist = favorite_artist;
+//             user.sigup_completion_percentage = "78%";
+
+//         }
+//         if (favorite_show) {
+//             user.favorite_show = favorite_show;
+//             user.sigup_completion_percentage = "82%";
+
+//         }
+//         if (favorite_sports_team) {
+//             user.favorite_sports_team = favorite_sports_team;
+//             user.sigup_completion_percentage = "86%";
+
+//         }
+//         if (favorite_place_to_go) {
+//             user.favorite_place_to_go = favorite_place_to_go;
+//             user.sigup_completion_percentage = "90%";
+
+//         }
+//         if (facebook) {
+//             user.facebook = facebook;
+//             user.sigup_completion_percentage = "92%";
+
+//         }
+//         if (instagram) {
+//             user.instagram = instagram;
+//             user.sigup_completion_percentage = "94%";
+
+//         } if (twitter) {
+//             user.twitter = twitter;
+//             user.sigup_completion_percentage = "96%";
+
+//         }
+//         if (linkedin) {
+//             user.facebook = linkedin;
+//             user.sigup_completion_percentage = "98%";
+
+//         }
+//         if (bio) {
+//             user.bio = bio;
+//             user.sigup_completion_percentage = "100%";
+
+//         }
+//         user.snapchat = snapchat;
+//         user.is_signup_complete = true;
+//         user.terms_privacy_condition = true;
+//         user.updated_at = new Date();
+
+//         await user.save();
+
+//         const userDetail = {
+//             _id: user._id,
+//             email: user.email,
+//             phone: user.phone,
+//             first_name: user.first_name
+//         }
+        
+//         return res.status(200).json({
+//             status: true,
+//             message: "Profile updated successfully.",
+//             data: userDetail,
+//         });
+//     } catch (error) {
+//         console.error("Error updating profile:", error);
+//         return res.status(500).json({
+//             status: false,
+//             message: "Error updating profile.",
+//             data: {
+//                 error: error || "Internal server error",
+//             },
+//         });
+//     }
+// };
+
+
+export const completeProfile = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const userId = req.user.id; 
+        const {
+            favourite_genre,
+            favourite_interest,
+            zodiac_sign,
+            college,
+            major,
+            graduating_year,
+            clubs,
+            relationship_status,
+            favorite_artist,
+            favorite_show,
+            favorite_sports_team,
+            favorite_place_to_go,
+            facebook,
+            instagram,
+            twitter,
+            linkedin,
+            snapchat,
+            bio,
+        } = req.body;
+
+        // Validate bio length (not exceeding 160 characters)
+        if (bio && bio.length > 160) {
+            return res.status(400).json({
+                status: false,
+                message: "Bio should not exceed 160 characters.",
+                data: {
+                    error: "Bio should not exceed 160 characters."
+                }
+            });
+        }
+
+        // Validate favourite_interest to ensure only 3 interests in total
+        let totalInterests = 0;
+        if (favourite_interest) {
+            for (const category of favourite_interest) {
+                totalInterests += category.interests.length;
+            }
+
+            if (totalInterests > 3) {
+                return res.status(400).json({
+                    status: false,
+                    message: "You can only select a total of 3 interests across all categories.",
+                    data: {
+                        error: "You can only select a total of 3 interests across all categories."
+                    }
+                });
+            }
+
+            for (const category of favourite_interest) {
+                if (category.interests.length > 3) {
+                    return res.status(400).json({
+                        status: false,
+                        message: `You can only select up to 3 interests in the category: ${category.category}`,
+                        data: {
+                            error: `You can only select up to 3 interests in the category: ${category.category}`
+                        }
+                    });
+                }
+            }
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                status: false,
+                message: "User not found.",
+                data: {
+                    error: "User not found."
+                }
+            });
+        }
+
+        let completionPercentage = 30;
+
+      
+        if (favourite_genre) {
+            user.favourite_genre = favourite_genre;
+            completionPercentage += 10;
+        }
+        if (favourite_interest) {
+            user.favourite_interests = favourite_interest;
+            completionPercentage += 10;
+        }
+        if (zodiac_sign) {
+            user.zodiac_sign = zodiac_sign;
+            completionPercentage += 10;
+        }
+        if (college) {
+            user.college = college;
+            completionPercentage += 3;
+        }
+        if (major) {
+            user.major = major;
+            completionPercentage += 3;
+        }
+        if (graduating_year) {
+            user.graduating_year = graduating_year;
+            completionPercentage += 3;
+        }
+        if (clubs) {
+            user.clubs = clubs;
+            completionPercentage += 3;
+        }
+        if (relationship_status) {
+            user.relationship_status = relationship_status;
+            completionPercentage += 3;
+        }
+        if (favorite_artist) {
+            user.favorite_artist = favorite_artist;
+            completionPercentage += 4;
+        }
+        if (favorite_show) {
+            user.favorite_show = favorite_show;
+            completionPercentage += 4;
+        }
+        if (favorite_sports_team) {
+            user.favorite_sports_team = favorite_sports_team;
+            completionPercentage += 4;
+        }
+        if (favorite_place_to_go) {
+            user.favorite_place_to_go = favorite_place_to_go;
+            completionPercentage += 3;
+        }
+        if (facebook) {
+            user.facebook = facebook;
+            completionPercentage += 1;
+        }
+        if (instagram) {
+            user.instagram = instagram;
+            completionPercentage += 1;
+        }
+        if (twitter) {
+            user.twitter = twitter;
+            completionPercentage += 1;
+        }
+        if (linkedin) {
+            user.linkedin = linkedin;
+            completionPercentage += 1;
+        }
+        if (bio) {
+            user.bio = bio;
+            completionPercentage += 5;
+        }
+        if (snapchat) {
+            user.snapchat = snapchat;
+            completionPercentage += 1;
+        }
+
+    
+        user.sigup_completion_percentage = `${completionPercentage}%`;
+
+      
+      
+            user.is_signup_complete = true;
+        
+
+        user.updated_at = new Date();
+
+       
+        await user.save();
+
+        const userDetail = {
+            _id: user._id,
+            email: user.email,
+            phone: user.phone,
+            first_name: user.first_name,
+            sigup_completion_percentage: user.sigup_completion_percentage
+        }
+        
+ 
+        return res.status(200).json({
+            status: true,
+            message: "Profile updated successfully.",
+            data: userDetail,
+        });
+    } catch (error) {
+        console.error("Error updating profile:", error);
+        return res.status(500).json({
+            status: false,
+            message: "Error updating profile.",
+            data: {
+                error: error || "Internal server error",
+            },
+        });
     }
-
-    // Find the user by ID
-    const user = await User.findById(userId);
-    if (!user) {
-      return res.status(404).json({
-        status: false,
-        message: "User not found.",
-      });
-    }
-
-    // Update user profile fields
-    user.favourite_genre = favourite_genre;
-    user.favourite_interests = favourite_interest;
-    user.zodiac_sign = zodiac_sign;
-    user.college = college;
-    user.major = major;
-    user.graduating_year = graduating_year;
-    user.clubs = clubs;
-    user.relationship_status = relationship_status;
-    user.favorite_artist = favorite_artist;
-    user.favorite_show = favorite_show;
-    user.favorite_sports_team = favorite_sports_team ;
-    user.favorite_place_to_go = favorite_place_to_go;
-    user.facebook = facebook;
-    user.instagram = instagram;
-    user.twitter = twitter ;
-    user.linkedin = linkedin;
-    user.snapchat = snapchat;
-    user.bio = bio;
-    user.is_signup_complete = true;
-    user.terms_privacy_condition = true;
-    user.updated_at = new Date();
-
-    // Save the updated user profile
-    await user.save();
-
-    const userDetail = {
-        _id: user._id,
-        email: user.email,
-        phone: user.phone,
-        first_name: user.first_name
-    }
-    // Return the updated profile
-    return res.status(200).json({
-      status: true,
-      message: "Profile updated successfully.",
-      data: userDetail,
-    });
-  } catch (error) {
-    console.error("Error updating profile:", error);
-    return res.status(500).json({
-      status: false,
-      message: "Error updating profile.",
-      data: {
-        error: error || "Internal server error",
-      },
-    });
-  }
 };
 
 
-//Funtion handle user login
 export const loginUser = async (req: Request, res: Response): Promise<any> => {
-    const { error } = loginSchema.validate(req.body);  
+    const { error } = loginSchema.validate(req.body);
     if (error) {
         return res.status(400).json({
-            status:false,
+            status: false,
             message: 'Validation error',
             data: {
                 error: error.details[0].message
@@ -299,17 +738,28 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
         });
     }
     try {
-        const { email, password } = req.body;
+        const { phone_code, phone, password } = req.body;
 
-        console.log(email, password, 'password')
-        // Find the user by email
-        const user = await User.findOne({ email , is_signup_complete: true});
+        console.log(phone_code, phone, password, 'password')
+        // Find the user by phone
+        const user = await User.findOne({ phone_code, phone, is_signup_complete: true });
         if (!user) {
             return res.status(404).json({
-                status : false ,
-                message: "Invalid email address", // No user found
+                status: false,
+                message: "Invalid Credentials.",
                 data: {
-                    error: 'Invalid email address'
+                    error: "Invalid Credentials."
+                }
+            });
+        }
+
+        const userFind = await User.findOne({ phone_code, phone, is_signup_complete: false });
+        if (userFind) {
+            return res.status(404).json({
+                status: false,
+                message: "Sorry! First Complete Your Profile.And Then Try To Login", // No user found
+                data: {
+                    error: "Sorry! First Complete Your Profile.And Then Try To Login"
                 }
             });
         }
@@ -318,7 +768,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
         console.log(isPasswordValid, 'valid')
         if (!isPasswordValid) {
             return res.status(400).json({
-                status : false,
+                status: false,
                 message: "Password is not correct", // Invalid password
                 data: {
                     error: "Password is not correct"
@@ -332,10 +782,10 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
         const token = jwt.sign(
             { id: user._id, phone: user.phone },
             JWT_SECRET as string,
-            { expiresIn: JWT_EXPIRES_IN } 
+            { expiresIn: JWT_EXPIRES_IN }
         );
 
-       
+
 
         const userDetail = {
             id: user._id,
@@ -345,25 +795,26 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
             date_of_birth: user.date_of_birth,
             phone: user.phone,
             token: token
-           
+
         };
         // Send a success response with the token
         return res.status(200).json({
-            status:true,
+            status: true,
             message: "Login successfully.",
             data: userDetail, // Return user information without password
 
         });
     } catch (error) {
         console.error("Error logging in:", error);
-        return res.status(500).json({ status :false , message: "Error logging in", data: {
-            error : error}});
+        return res.status(500).json({
+            status: false, message: "Error logging in", data: {
+                error: error
+            }
+        });
     }
 };
 
-
-// Function to get user profile based on userId from req.user
-export const getProfile = async (req: Request, res: Response) : Promise<any>=> {
+export const getProfile = async (req: Request, res: Response): Promise<any> => {
     const userId = req.user.id;  // Assuming that req.user is populated by JWT decoding middleware
 
     try {
@@ -401,8 +852,7 @@ export const getProfile = async (req: Request, res: Response) : Promise<any>=> {
     }
 };
 
-
-export const forgotPassword = async (req: Request, res: Response) : Promise<any> => {
+export const forgotPassword = async (req: Request, res: Response): Promise<any> => {
     // Validate the request body using Joi
     const { error } = forgetPasswordSchema.validate(req.body);
 
@@ -450,7 +900,7 @@ export const forgotPassword = async (req: Request, res: Response) : Promise<any>
             status: true,
             message: 'OTP sent successfully to your mobile number.',
             data: {
-                otp: otp,  
+                otp: otp,
             }
         });
 
@@ -471,10 +921,10 @@ export const forgotVerifyOtp = async (req: Request, res: Response): Promise<any>
 
     // Validate input
     const { error } = otpVerifySchema.validate(req.body);
-    
+
     if (error) {
         return res.status(400).json({
-            status: false,  
+            status: false,
             message: "Validation error",
             data: {
                 error: error.details[0].message
@@ -534,7 +984,7 @@ export const forgotVerifyOtp = async (req: Request, res: Response): Promise<any>
         const token = jwt.sign(
             { id: user._id, phone: user.phone },
             JWT_SECRET as string,
-            { expiresIn: JWT_EXPIRES_IN } 
+            { expiresIn: JWT_EXPIRES_IN }
         );
 
         return res.status(200).json({
@@ -557,8 +1007,8 @@ export const forgotVerifyOtp = async (req: Request, res: Response): Promise<any>
 };
 
 
-// Reset password handler
-export const resetPassword = async (req: Request, res: Response) : Promise<any> => {
+
+export const resetPassword = async (req: Request, res: Response): Promise<any> => {
     // Validate the request body using Joi
     const { error } = resetPasswordSchema.validate(req.body);
 
@@ -606,11 +1056,11 @@ export const resetPassword = async (req: Request, res: Response) : Promise<any> 
         res.status(200).json({
             status: true,
             message: 'Password updated successfully.Please login with new Password',
-            data: 
+            data:
                 userDetail
-            
+
         });
-        
+
     } catch (error) {
         console.error('Error during reset password:', error);
         res.status(500).json({
@@ -623,8 +1073,8 @@ export const resetPassword = async (req: Request, res: Response) : Promise<any> 
     }
 };
 
-// Change password handler
-export const changePassword = async (req: Request, res: Response) : Promise<any> => {
+
+export const changePassword = async (req: Request, res: Response): Promise<any> => {
     // Validate the request body using Joi
     const { error } = changePasswordSchema.validate(req.body);
 
@@ -686,7 +1136,7 @@ export const changePassword = async (req: Request, res: Response) : Promise<any>
             message: 'Password updated successfully.',
             data: userDetail
         });
-        
+
     } catch (error) {
         console.error('Error during change password:', error);
         res.status(500).json({
@@ -699,187 +1149,3 @@ export const changePassword = async (req: Request, res: Response) : Promise<any>
     }
 };
 
-// ---------- Get College List -----------------------------//
-
-
-// without search 
-
-// export const getCollegeList = async (req: Request, res: Response): Promise<any> => {
-//     try {
-//         // Fetch all colleges from the database
-//         const colleges = await College.find();
-
-//         // Return the college list
-//         res.status(200).json({
-//             status: true,
-//             message: 'College list fetched successfully',
-//             data: colleges,
-//         });
-//     } catch (error) {
-//         console.error('Error fetching college list:', error);
-
-//         // Return an error response
-//         res.status(500).json({
-//             status: false,
-//             message: 'Internal server error',
-//             data: error,
-//         });
-//     }
-// };
-
-export const getCollegeList = async (req: Request, res: Response): Promise<any> => {
-    try {
-        // Get pagination and search parameters from the request query
-        const { page = 1, limit = 10, search = '' } = req.query;
-
-        const pageNum = Number(page);
-        const limitNum = Number(limit);
-        const skip = (pageNum - 1) * limitNum;
-
-       // Create the search query object
-       const searchQuery: any = {};
-       if (search) {
-           const searchRegex = new RegExp(search as string, 'i'); // Case-insensitive search
-           searchQuery.$or = [
-               { name: searchRegex },
-           ];
-       }
-
-        // Fetch colleges from the database with pagination and search
-        const colleges = await College.find(searchQuery)
-            .skip(skip)
-            .limit(limitNum)
-            .sort({ name: 1 });  // Sorting by name, adjust as needed
-
-        // Get the total count for pagination
-        const totalCount = await College.countDocuments(searchQuery);
-
-        // Return the college list along with pagination information
-        res.status(200).json({
-            status: true,
-            message: 'College list fetched successfully',
-            data: {
-                colleges,
-                totalCount,
-                totalPages: Math.ceil(totalCount / limitNum),
-                currentPage: pageNum,
-            },
-        });
-    } catch (error) {
-        console.error('Error fetching college list:', error);
-
-        // Return an error response
-        res.status(500).json({
-            status: false,
-            message: 'Internal server error',
-            data: error,
-        });
-    }
-};
-
-
-
-// ------------- Get Major List -----------------------------//
-
-export const getMajors = async (req: Request, res: Response): Promise<any> => {
-    try {
-        // Hardcoded list of popular majors in the USA
-        const majors = [
-            "Computer Science",
-            "Business Administration",
-            "Mechanical Engineering",
-            "Psychology",
-            "Nursing",
-            "Biology",
-            "Education",
-            "Political Science",
-            "Economics",
-            "Accounting",
-            "Marketing",
-            "Electrical Engineering",
-            "Civil Engineering",
-            "Mathematics",
-            "Physics",
-            "Sociology",
-            "History",
-            "Philosophy",
-            "Environmental Science",
-            "Communication Studies",
-            "Law",
-            "Journalism",
-            "Anthropology",
-            "Architecture",
-            "Criminal Justice",
-            "Health Sciences"
-        ];
-
-        // Return the list of majors
-        res.status(200).json({
-            status: true,
-            message: "Majors fetched successfully",
-            data: majors,
-        });
-    } catch (error) {
-        console.error('Error fetching majors:', error);
-
-        // Return an error response
-        res.status(500).json({
-            status: false,
-            message: "Internal server error",
-            data: error,
-        });
-    }
-};
-
-// ----------------- Get Artist List ------------------------------//
-
-
-export const getArtistList = async (req: Request, res: Response): Promise<any> => {
-    try {
-        // Get page and search query from request
-        const { page = 1, limit = 10, search = ''  } = req.query;
-
-        const pageNum = Number(page);
-        const limitNum = Number(limit);
-        const skip = (pageNum - 1) * limitNum;
-
-        // Create the search query object
-        const searchQuery: any = {};
-        if (search) {
-            const searchRegex = new RegExp(search as string, 'i'); // Case-insensitive search
-            searchQuery.$or = [
-                { name: searchRegex },
-                // { country: searchRegex },
-                // { gender: searchRegex },
-            ];
-        }
-
-        // Fetch artists with pagination and search
-        const artists = await Artist.find(searchQuery)
-            .skip(skip)
-            .limit(limitNum)
-            // .sort({ created_at: -1 });  // Optional: Sort by created_at descending
-
-        // Get total count for pagination
-        const totalCount = await Artist.countDocuments(searchQuery);
-
-        res.status(200).json({
-            status: true,
-            message: "Artists fetched successfully",
-            data: {
-                artists,
-                totalCount,
-                totalPages: Math.ceil(totalCount / limitNum),
-                currentPage: pageNum,
-            },
-        });
-    } catch (error) {
-        console.error('Error fetching artist list:', error);
-
-        res.status(500).json({
-            status: false,
-            message: "Internal server error",
-            data: error,
-        });
-    }
-};
