@@ -36,17 +36,17 @@ export const userSchema = Joi.object({
     pronouns: Joi.string().required().messages({
         'any.required': 'Pronouns are required.'
     }),
-    device_id: Joi.string().required().messages({
+    device_id: Joi.string().optional().messages({
         'any.required': 'Device ID is required.'
     }),
-    device_token: Joi.string().required().messages({
+    device_token: Joi.string().optional().messages({
         'any.required': 'Device token is required.'
     }),
-    device_type: Joi.string().valid("Android", "iOS", "Web").required().messages({
+    device_type: Joi.string().valid("Android", "iOS", "Web").optional().messages({
         'any.required': 'Device type is required.',
         'string.valid': 'Device type must be either "Android", "iOS", or "Web".'
     }),
-    timezone: Joi.string().required().messages({
+    timezone: Joi.string().optional().messages({
         'any.required': 'Timezone is required.'
     })
 });

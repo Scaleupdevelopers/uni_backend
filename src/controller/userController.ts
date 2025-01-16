@@ -121,6 +121,39 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
         const { email, password, first_name, last_name, phone, phone_code, date_of_birth, pronouns, device_id, device_token, device_type, timezone } = req.body;
 
 
+        const checkUserSignupComplete = await User.findOne({ phone, phone_code, email, is_signup_complete: true });
+        console.log(checkUserSignupComplete, 'complete')
+        if (checkUserSignupComplete) {
+            return res.status(400).json({
+                status: false,
+                message: "User already exists with this detail",
+                data: {
+                    error: "User already exists with this detail",
+                },
+            });
+        }
+
+
+        // Validate age (ensure the user is 18 or older)
+        const dob = new Date(date_of_birth);
+        const today = new Date();
+        const age = today.getFullYear() - dob.getFullYear();
+        const isBirthdayPassed = today.getMonth() > dob.getMonth() || 
+                                 (today.getMonth() === dob.getMonth() && today.getDate() >= dob.getDate());
+        console.log(isBirthdayPassed, 'passed');
+        const actualAge = isBirthdayPassed ? age : age - 1;
+        console.log(actualAge, 'actualAge');
+
+        if (actualAge < 18) {
+            return res.status(400).json({
+                status: false,
+                message: "You are not allowed to use this app.",
+                data: {
+                    error: "User must be at least 18 years old to register.",
+                },
+            });
+        }
+
         //---------------------------- For Local Upload image---------------------------------//
         console.log(req.file, req.body, 'body');
         if (!req.file) {
@@ -159,16 +192,7 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
 
 
 
-        const checkUserSignupComplete = await User.findOne({ phone, phone_code, email, is_signup_complete: true });
-        if (checkUserSignupComplete) {
-            return res.status(400).json({
-                status: false,
-                message: "Error creating user",
-                data: {
-                    error: "User already exists with this detail",
-                },
-            });
-        }
+        
 
         const checkUserExistOrNot = await User.findOne({ phone, phone_code, email, is_signup_complete: false });
 
@@ -186,7 +210,6 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
             savedUser.device_token = device_token;
             savedUser.device_type = device_type;
             savedUser.timezone = timezone;
-
 
             if (profileImageName) {
                 savedUser.profile_pic = profileImageName;
@@ -248,7 +271,7 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
 
 
 export const verifyOtp = async (req: Request, res: Response): Promise<any> => {
-    // Validate input
+   
     const { error } = otpVerifySchema.validate(req.body);
 
     if (error) {
@@ -300,18 +323,18 @@ export const verifyOtp = async (req: Request, res: Response): Promise<any> => {
             });
         }
 
-        // OTP is valid, mark user as verified
+        
         // user.is_phone_verified = true;
-        user.phone_verified_otp = null; // Clear the OTP
-        user.phone_otp_create_time = null; // Clear the OTP creation time
-        user.phone_otp_expiry_time = null; // Clear the OTP expiry time
+        user.phone_verified_otp = null; 
+        user.phone_otp_create_time = null; 
+        user.phone_otp_expiry_time = null; 
         user.otp_verify_status = true;
         user.sigup_completion_percentage = '30%';
 
         await user.save();
 
         console.log(JWT_EXPIRES_IN, 'in')
-        // Generate JWT token
+       
         const token = jwt.sign(
             { id: user._id, phone: user.phone },
             JWT_SECRET as string,
@@ -558,7 +581,7 @@ export const completeProfile = async (req: Request, res: Response): Promise<any>
             bio,
         } = req.body;
 
-        // Validate bio length (not exceeding 160 characters)
+        
         if (bio && bio.length > 160) {
             return res.status(400).json({
                 status: false,
@@ -688,15 +711,8 @@ export const completeProfile = async (req: Request, res: Response): Promise<any>
 
     
         user.sigup_completion_percentage = `${completionPercentage}%`;
-
-      
-      
-            user.is_signup_complete = true;
-        
-
+        user.is_signup_complete = true;
         user.updated_at = new Date();
-
-       
         await user.save();
 
         const userDetail = {
@@ -740,18 +756,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
     try {
         const { phone_code, phone, password } = req.body;
 
-        console.log(phone_code, phone, password, 'password')
-        // Find the user by phone
-        const user = await User.findOne({ phone_code, phone, is_signup_complete: true });
-        if (!user) {
-            return res.status(404).json({
-                status: false,
-                message: "Invalid Credentials.",
-                data: {
-                    error: "Invalid Credentials."
-                }
-            });
-        }
+        console.log(phone_code, phone, password, 'password');
 
         const userFind = await User.findOne({ phone_code, phone, is_signup_complete: false });
         if (userFind) {
@@ -763,6 +768,20 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
                 }
             });
         }
+
+       
+        const user = await User.findOne({ phone_code, phone, is_signup_complete: true });
+        if (!user) {
+            return res.status(404).json({
+                status: false,
+                message: "Invalid Credentials.",
+                data: {
+                    error: "Invalid Credentials."
+                }
+            });
+        }
+
+      
         // Compare the provided password with the stored hashed password
         const isPasswordValid = await bcrypt.compare(password, user.password as string);
         console.log(isPasswordValid, 'valid')
@@ -794,6 +813,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
             last_name: user.last_name,
             date_of_birth: user.date_of_birth,
             phone: user.phone,
+            sigup_completion_percentage: user.sigup_completion_percentage,
             token: token
 
         };
