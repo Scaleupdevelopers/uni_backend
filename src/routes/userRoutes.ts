@@ -1,5 +1,5 @@
 import express from "express";
-import { createUser,verifyOtp, completeProfile , loginUser, getProfile, forgotPassword,forgotVerifyOtp,resetPassword, changePassword} from '../controller/userController.js';
+import { createUser,verifyOtp, completeProfile , loginUser, getProfile, forgotPassword,forgotVerifyOtp,resetPassword, changePassword, updateNotificationPermission, updateAccountPrivacy, getProfileOfOtherUser} from '../controller/userController.js';
 import {getCollegeList, getMajors, getArtistList, getFavShows, getSportsTeams, getFavLocation} from '../controller/staticController.js'
 import {decodeJWTToken} from '../middleware/authMiddleware.js';
 import {uploadLocalProfileImage, uploadS3ProfileImage} from '../middleware/multer.js';
@@ -38,6 +38,16 @@ router.get('/get-fav-sport', decodeJWTToken, getSportsTeams);
 // ---------------------- Get Favourite Places Routes --------------------------//
 router.get('/get-fav-places', decodeJWTToken, getFavLocation);  
 
+// ---------------------- User Update Profile --------------------------//
+
+// ---------------------- Update Notification Setting Routes --------------------------//
+router.patch("/update-notification-setting", decodeJWTToken, updateNotificationPermission);
+
+// ---------------------- Update Account Privacy Setting Routes --------------------------//
+router.patch("/update-account-setting", decodeJWTToken, updateAccountPrivacy);
+
+// ---------------------- Get Other's User Profile Routes --------------------------//
+router.get("/get-other-profile/:id", decodeJWTToken, getProfileOfOtherUser);
 
 
 export default router;

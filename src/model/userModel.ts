@@ -76,6 +76,7 @@ const userSchema = new Schema({
   // status: { type: String, enum: ['active', 'inactive', 'banned'], required: false ,default:null },
   notifications_permission: { type: Boolean, default: true },
   terms_privacy_condition: { type: Boolean, default: true },
+  is_account_public: { type: Boolean, default: true },
 
   last_login_at: { type: String, required: false, default: null },
   last_login_ip: { type: String, required: false, default: null },

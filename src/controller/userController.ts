@@ -835,10 +835,10 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
 };
 
 export const getProfile = async (req: Request, res: Response): Promise<any> => {
-    const userId = req.user.id;  // Assuming that req.user is populated by JWT decoding middleware
+    const userId = req.user.id;  
 
     try {
-        // Find the user by the userId from the database
+      
         const user = await User.findById(userId);
 
         if (!user) {
@@ -873,7 +873,7 @@ export const getProfile = async (req: Request, res: Response): Promise<any> => {
 };
 
 export const forgotPassword = async (req: Request, res: Response): Promise<any> => {
-    // Validate the request body using Joi
+    
     const { error } = forgetPasswordSchema.validate(req.body);
 
     if (error) {
@@ -889,7 +889,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<any> 
     const { phone, phone_code } = req.body;
 
     try {
-        // Find the user by phone number and check if signup is complete
+      
         const user = await User.findOne({ phone, phone_code, is_signup_complete: true });
 
         if (!user) {
@@ -902,11 +902,8 @@ export const forgotPassword = async (req: Request, res: Response): Promise<any> 
             });
         }
 
-        // Generate OTP (6-digit number)
         const otp = Math.floor(100000 + Math.random() * 900000);
-        const otpExpiryTime = new Date(Date.now() + 3 * 60 * 1000); // OTP expiry time (5 minutes from now)
-
-        // Save OTP and expiry time in the user's record
+        const otpExpiryTime = new Date(Date.now() + 3 * 60 * 1000); 
         user.phone_verified_otp = otp;
         user.phone_otp_create_time = new Date();
         user.phone_otp_expiry_time = otpExpiryTime;
@@ -915,7 +912,6 @@ export const forgotPassword = async (req: Request, res: Response): Promise<any> 
         // Send OTP to the user's phone (using Twilio or any other service)
         // await sendOtpToPhone(phone, phone_code, otp);
 
-        // Return response indicating success
         res.status(200).json({
             status: true,
             message: 'OTP sent successfully to your mobile number.',
@@ -939,7 +935,7 @@ export const forgotPassword = async (req: Request, res: Response): Promise<any> 
 
 export const forgotVerifyOtp = async (req: Request, res: Response): Promise<any> => {
 
-    // Validate input
+   
     const { error } = otpVerifySchema.validate(req.body);
 
     if (error) {
@@ -955,7 +951,7 @@ export const forgotVerifyOtp = async (req: Request, res: Response): Promise<any>
     const { phone, phone_code, otp } = req.body;
 
     try {
-        // Find user with matching phone and phone_code
+     
         const user = await User.findOne({ phone, phone_code });
 
         if (!user) {
@@ -968,7 +964,6 @@ export const forgotVerifyOtp = async (req: Request, res: Response): Promise<any>
             });
         }
 
-        // Check if OTP matches
         if (user.phone_verified_otp !== otp) {
             return res.status(400).json({
                 status: false,
@@ -979,7 +974,6 @@ export const forgotVerifyOtp = async (req: Request, res: Response): Promise<any>
             });
         }
 
-        // Check if OTP is expired
         const currentTime = new Date();
         if (user.phone_otp_expiry_time && user.phone_otp_expiry_time < currentTime) {
             return res.status(400).json({
@@ -991,16 +985,16 @@ export const forgotVerifyOtp = async (req: Request, res: Response): Promise<any>
             });
         }
 
-        // OTP is valid, mark user as verified
+ 
         // user.is_phone_verified = true;
-        user.phone_verified_otp = null; // Clear the OTP
-        user.phone_otp_create_time = null; // Clear the OTP creation time
-        user.phone_otp_expiry_time = null; // Clear the OTP expiry time
+        user.phone_verified_otp = null;
+        user.phone_otp_create_time = null; 
+        user.phone_otp_expiry_time = null; 
         user.updated_at = new Date();
         await user.save();
 
         console.log(JWT_EXPIRES_IN, 'in')
-        // Generate JWT token
+      
         const token = jwt.sign(
             { id: user._id, phone: user.phone },
             JWT_SECRET as string,
@@ -1029,7 +1023,7 @@ export const forgotVerifyOtp = async (req: Request, res: Response): Promise<any>
 
 
 export const resetPassword = async (req: Request, res: Response): Promise<any> => {
-    // Validate the request body using Joi
+  
     const { error } = resetPasswordSchema.validate(req.body);
 
     if (error) {
@@ -1045,7 +1039,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<any> =
     const { new_password } = req.body;
 
     try {
-        // Find the user using the id from the JWT (req.user.id)
+       
         const user = await User.findById(req.user.id);
 
         if (!user) {
@@ -1058,10 +1052,6 @@ export const resetPassword = async (req: Request, res: Response): Promise<any> =
             });
         }
 
-        // // Hash the new password
-        // const hashedPassword = await bcrypt.hash(new_password, 10);
-
-        // Update the user's password in the database
         user.password = new_password;
         user.password_changed_at = new Date();
         user.updated_at = new Date();
@@ -1072,7 +1062,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<any> =
             first_name: user.first_name,
             phone: user.phone
         }
-        // Return a success response
+       
         res.status(200).json({
             status: true,
             message: 'Password updated successfully.Please login with new Password',
@@ -1095,7 +1085,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<any> =
 
 
 export const changePassword = async (req: Request, res: Response): Promise<any> => {
-    // Validate the request body using Joi
+   
     const { error } = changePasswordSchema.validate(req.body);
 
     if (error) {
@@ -1111,7 +1101,7 @@ export const changePassword = async (req: Request, res: Response): Promise<any> 
     const { current_password, new_password } = req.body;
 
     try {
-        // Find the user using the id from the JWT (req.user.id)
+      
         const user = await User.findById(req.user.id);
 
         if (!user) {
@@ -1124,7 +1114,7 @@ export const changePassword = async (req: Request, res: Response): Promise<any> 
             });
         }
 
-        // Check if the current password matches the one stored in the database
+      
         const isPasswordValid = await bcrypt.compare(current_password, user.password);
 
         if (!isPasswordValid) {
@@ -1140,7 +1130,7 @@ export const changePassword = async (req: Request, res: Response): Promise<any> 
         // // Hash the new password
         // const hashedPassword = await bcrypt.hash(new_password, 10);
 
-        // Update the user's password in the database
+  
         user.password = new_password;
         user.password_changed_at = new Date();
         user.updated_at = new Date();
@@ -1150,7 +1140,7 @@ export const changePassword = async (req: Request, res: Response): Promise<any> 
             first_name: user.first_name,
             phone: user.phone
         }
-        // Return a success response
+     
         res.status(200).json({
             status: true,
             message: 'Password updated successfully.',
@@ -1168,4 +1158,162 @@ export const changePassword = async (req: Request, res: Response): Promise<any> 
         });
     }
 };
+
+
+
+export const updateNotificationPermission = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const userId = req.user.id;
+        const { notification_permission } = req.body;
+
+     
+        if (typeof notification_permission !== "boolean") {
+            return res.status(400).json({
+                status: false,
+                message: "Invalid data. 'notification_permission' must be a boolean.",
+                data: {
+                    error: "Invalid notification_permission value.",
+                },
+            });
+        }
+
+      
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                status: false,
+                message: "User not found.",
+                data: {
+                    error: "User not found.",
+                },
+            });
+        }
+
+     
+        user.notifications_permission = notification_permission;
+        user.updated_at = new Date();
+        await user.save();
+
+        return res.status(200).json({
+            status: true,
+            message: "Notification permission updated successfully.",
+            data: {
+                user_id: user._id,
+                notifications_permission: user.notifications_permission,
+            },
+        });
+    } catch (error) {
+        console.error("Error updating notification permission:", error);
+        return res.status(500).json({
+            status: false,
+            message: "Error updating notification permission.",
+            data: {
+                error: error || "An internal server error occurred.",
+            },
+        });
+    }
+};
+
+
+
+export const updateAccountPrivacy = async (req: Request, res: Response): Promise<any> => {
+    try {
+        const userId = req.user.id; 
+        const { is_account_public } = req.body;
+
+     
+        if (typeof is_account_public !== "boolean") {
+            return res.status(400).json({
+                status: false,
+                message: "Invalid data. 'is_account_public' must be a boolean.",
+                data: {
+                    error: "Invalid is_account_public value.",
+                },
+            });
+        }
+
+       
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                status: false,
+                message: "User not found.",
+                data: {
+                    error: "User not found.",
+                },
+            });
+        }
+
+     
+        user.is_account_public = is_account_public;
+        user.updated_at = new Date(); 
+        await user.save();
+
+        return res.status(200).json({
+            status: true,
+            message: "Account privacy setting updated successfully.",
+            data: {
+                user_id: user._id,
+                is_account_public: user.is_account_public,
+            },
+        });
+    } catch (error) {
+        console.error("Error updating account privacy setting:", error);
+        return res.status(500).json({
+            status: false,
+            message: "Error updating account privacy setting.",
+            data: {
+                error: error || "An internal server error occurred.",
+            },
+        });
+    }
+};
+
+
+
+export const getProfileOfOtherUser = async (req: Request, res: Response): Promise<any> => {
+  try {
+    const userId = req.params.id;
+    if (!userId) {
+      return res.status(400).json({
+        status: false,
+        message: "User ID is required.",
+        data: {
+          error: "Missing user ID in request parameters.",
+        },
+      });
+    }
+    const user = await User.findOne({
+      _id: userId,
+      is_account_public: true,
+    }).select("-password"); // Exclude sensitive fields like password
+
+    if (!user) {
+      return res.status(403).json({
+        status: false,
+        message: "User profile is not public.",
+        data: {
+          error: "Access denied. Profile is either private or not available.",
+        },
+      });
+    }
+
+    return res.status(200).json({
+      status: true,
+      message: "User profile fetched successfully.",
+      data: user,
+    });
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    return res.status(500).json({
+      status: false,
+      message: "Error fetching user profile.",
+      data: {
+        error: error || "Internal server error.",
+      },
+    });
+  }
+};
+
+
 
