@@ -5,7 +5,7 @@ node_modules/
 *.tsbuildinfo
 *.js
 *.js.map
-*.d.ts
+
 
 # Build artifacts
 dist/
