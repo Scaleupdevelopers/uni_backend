@@ -817,7 +817,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
             token: token
 
         };
-        // Send a success response with the token
+       
         return res.status(200).json({
             status: true,
             message: "Login successfully.",
@@ -1315,5 +1315,210 @@ export const getProfileOfOtherUser = async (req: Request, res: Response): Promis
   }
 };
 
+
+//------------------- Update User Profile ------------------------------//
+
+// export const updateUserProfile = async (req: Request, res: Response): Promise<any> => {
+//     try {
+//         const userId = req.user.id;
+//         const updates = req.body;
+
+//         // Handle profile picture upload
+//         if (req.file) {
+//             updates.profile_pic = `/uploads/profile_pics/${req.file.filename}`;
+//         }
+
+//         // Validate date_of_birth (must be at least 18 years old)
+//         if (updates.date_of_birth) {
+//             const birthDate = new Date(updates.date_of_birth);
+//             const age = new Date().getFullYear() - birthDate.getFullYear();
+//             if (age < 18) {
+//                 return res.status(400).json({
+//                     status: false,
+//                     message: "User must be at least 18 years old.",
+//                 });
+//             }
+//         }
+
+//         // Validate favourite_interest (max 3 interests)
+//         if (updates.favourite_interest) {
+//             const interests = JSON.parse(updates.favourite_interest);
+//             let totalInterests = interests.reduce((acc, category) => acc + category.interests.length, 0);
+//             if (totalInterests > 3) {
+//                 return res.status(400).json({
+//                     status: false,
+//                     message: "You can only select a total of 3 interests across all categories.",
+//                 });
+//             }
+//         }
+
+//         // Validate bio length
+//         if (updates.bio && updates.bio.length > 160) {
+//             return res.status(400).json({
+//                 status: false,
+//                 message: "Bio should not exceed 160 characters.",
+//             });
+//         }
+
+//         // Find and update user
+//         const user = await User.findByIdAndUpdate(userId, updates);
+//         if (!user) {
+//             return res.status(404).json({ status: false, message: "User not found." });
+//         }
+
+       
+
+//         return res.status(200).json({
+//             status: true,
+//             message: "User profile updated successfully.",
+//             data: user,
+//         });
+//     } catch (error) {
+//         return res.status(500).json({
+//             status: false,
+//             message: "Error updating user profile.",
+//             error: error,
+//         });
+//     }
+// };
+
+
+
+export const updateUserProfile = async (req: Request, res: Response): Promise<any> => {
+    try {
+        
+        const userId = req.user.id;
+        console.log(userId, 'id')
+        const allowedFields = [
+            "first_name", "last_name", "pronouns", "date_of_birth", "phone_code", "phone", "email",
+            , "profile_pic", "favourite_genre", "favourite_interest",
+            "zodiac_sign", "college", "major", "graduating_year", "clubs", "relationship_status", "favorite_artist",
+            "favorite_sports_team", "favorite_place_to_go", "facebook", "instagram", "twitter", "linkedin", "snapchat", "bio"
+        ];
+
+        const updates = req.body;
+        console.log(req.body, 'body');
+
+        // Handle profile picture upload
+        if (req.file) {
+            updates.profile_pic = `/uploads/profile_pics/${req.file.filename}`;
+        }
+
+        // Validate date_of_birth for age restriction (must be at least 18 years old)
+        if (updates.date_of_birth) {
+            const birthDate = new Date(updates.date_of_birth);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDifference = today.getMonth() - birthDate.getMonth();
+
+            if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+
+            if (age < 18) {
+                return res.status(400).json({
+                    status: false,
+                    message: "User must be at least 18 years old.",
+                    data: {
+                        error: "User must be at least 18 years old."
+                    }
+                });
+            }
+        }
+
+        // Validate favourite_interest to ensure only 3 interests in total
+        if (updates.favourite_interest) {
+            let totalInterests = 0;
+
+            for (const category of updates.favourite_interest) {
+                totalInterests += category.interests.length;
+            }
+
+            if (totalInterests > 3) {
+                return res.status(400).json({
+                    status: false,
+                    message: "You can only select a total of 3 interests across all categories.",
+                    data: {
+                        error: "You can only select a total of 3 interests across all categories."
+                    }
+                });
+            }
+
+            for (const category of updates.favourite_interest) {
+                if (category.interests.length > 3) {
+                    return res.status(400).json({
+                        status: false,
+                        message: `You can only select up to 3 interests in the category: ${category.category}`,
+                        data: {
+                            error: `You can only select up to 3 interests in the category: ${category.category}`
+                        }
+                    });
+                }
+            }
+        }
+
+        if (updates.bio && updates.bio.length > 160) {
+            return res.status(400).json({
+                status: false,
+                message: "Bio should not exceed 160 characters.",
+                data: {
+                    error: "Bio should not exceed 160 characters."
+                }
+            });
+        }
+
+        const user = await User.findById(userId);
+        if (!user) {
+            return res.status(404).json({
+                status: false,
+                message: "User not found.",
+                data: {
+                    error: "User not found."
+                }
+            });
+        }
+
+        // Update allowed fields only
+        Object.keys(updates).forEach(key => {
+            if (allowedFields.includes(key)) {
+                // Cast to ensure user can accept the update
+                (user as any)[key] = updates[key];
+            }
+        });
+
+        user.updated_at = new Date();
+        await user.save();
+
+        console.log(user,'user')
+        return res.status(200).json({
+            status: true,
+            message: "User profile updated successfully.",
+            data: {
+                user_id: user._id,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                pronouns: user.pronouns,
+                date_of_birth: user.date_of_birth,
+                phone_code: user.phone_code,
+                phone: user.phone,
+                email: user.email,
+                profile_pic: user.profile_pic,
+                favourite_genre: user.favourite_genre,
+                favourite_interest: user.favourite_interests,
+                bio: user.bio,
+            }
+        });
+
+    } catch (error) {
+        console.error("Error updating user profile:", error);
+        return res.status(500).json({
+            status: false,
+            message: "Error updating user profile.",
+            data: {
+                error: error || "An internal server error occurred."
+            }
+        });
+    }
+};
 
 

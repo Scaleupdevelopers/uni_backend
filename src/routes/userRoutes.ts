@@ -1,5 +1,5 @@
 import express from "express";
-import { createUser,verifyOtp, completeProfile , loginUser, getProfile, forgotPassword,forgotVerifyOtp,resetPassword, changePassword, updateNotificationPermission, updateAccountPrivacy, getProfileOfOtherUser} from '../controller/userController.js';
+import { createUser,verifyOtp, completeProfile , loginUser, getProfile, forgotPassword,forgotVerifyOtp,resetPassword, changePassword, updateNotificationPermission, updateAccountPrivacy, getProfileOfOtherUser, updateUserProfile} from '../controller/userController.js';
 import {getCollegeList, getMajors, getArtistList, getFavShows, getSportsTeams, getFavLocation} from '../controller/staticController.js'
 import {decodeJWTToken} from '../middleware/authMiddleware.js';
 import {uploadLocalProfileImage, uploadS3ProfileImage} from '../middleware/multer.js';
@@ -49,5 +49,8 @@ router.patch("/update-account-setting", decodeJWTToken, updateAccountPrivacy);
 // ---------------------- Get Other's User Profile Routes --------------------------//
 router.get("/get-other-profile/:id", decodeJWTToken, getProfileOfOtherUser);
 
+
+// ----------------------  User Update Profile Routes --------------------------//
+router.put("/update-profile", uploadLocalProfileImage, decodeJWTToken, updateUserProfile);
 
 export default router;
