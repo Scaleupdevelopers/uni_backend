@@ -16,19 +16,20 @@ export const userSchema = Joi.object({
         'any.required': 'Last name is required.'
     }),
     phone: Joi.string()
-        .pattern(/^\d{10}$/)
-        .required()
-        .messages({
-            'string.pattern.base': 'Phone number must contain only digits and be exactly 10 characters long.',
-            'any.required': 'Phone number is required.'
-        }),
-    phone_code: Joi.string()
-        .pattern(/^\+\d{1,3}$/)
-        .required()
-        .messages({
-            'string.pattern.base': 'Phone code must start with "+" followed by 1 to 3 digits.',
-            'any.required': 'Phone code is required.'
-        }),
+    .pattern(/^\+?\d{10,15}$/) // Allows optional "+" followed by 10-15 digits
+    .required()
+    .messages({
+        'string.pattern.base': 'Phone number must start with an optional "+" and contain 10 to 15 digits.',
+        'any.required': 'Phone number is required.'
+    }),
+
+    // phone_code: Joi.string()
+    //     .pattern(/^\+\d{1,3}$/)
+    //     .required()
+    //     .messages({
+    //         'string.pattern.base': 'Phone code must start with "+" followed by 1 to 3 digits.',
+    //         'any.required': 'Phone code is required.'
+    //     }),
     date_of_birth: Joi.string().isoDate().required().messages({
         'string.isoDate': 'Date of birth must be a valid ISO date format (YYYY-MM-DD).',
         'any.required': 'Date of birth is required.'
@@ -53,19 +54,19 @@ export const userSchema = Joi.object({
 
 export const otpVerifySchema = Joi.object({
     phone: Joi.string()
-        .pattern(/^\d{10}$/)
-        .required()
-        .messages({
-            'string.pattern.base': 'Phone number must contain only digits and be exactly 10 characters long.',
-            'any.required': 'Phone number is required.'
-        }),
-    phone_code: Joi.string()
-        .pattern(/^\+\d{1,3}$/)
-        .required()
-        .messages({
-            'string.pattern.base': 'Phone code must start with "+" followed by 1 to 3 digits.',
-            'any.required': 'Phone code is required.'
-        }),
+    .pattern(/^\+?\d{10,15}$/) // Allows optional "+" followed by 10-15 digits
+    .required()
+    .messages({
+        'string.pattern.base': 'Phone number must start with an optional "+" and contain 10 to 15 digits.',
+        'any.required': 'Phone number is required.'
+    }),
+    // phone_code: Joi.string()
+    //     .pattern(/^\+\d{1,3}$/)
+    //     .required()
+    //     .messages({
+    //         'string.pattern.base': 'Phone code must start with "+" followed by 1 to 3 digits.',
+    //         'any.required': 'Phone code is required.'
+    //     }),
     otp: Joi.number()
         .integer()
         .min(100000)
@@ -87,19 +88,20 @@ export const loginSchema = Joi.object({
     //     'any.required': 'Email is required.'
     // }),
     phone: Joi.string()
-    .pattern(/^\d{10}$/)
+    .pattern(/^\+?\d{10,15}$/) // Allows optional "+" followed by 10-15 digits
     .required()
     .messages({
-        'string.pattern.base': 'Phone number must contain only digits and be exactly 10 characters long.',
+        'string.pattern.base': 'Phone number must start with an optional "+" and contain 10 to 15 digits.',
         'any.required': 'Phone number is required.'
     }),
-phone_code: Joi.string()
-    .pattern(/^\+\d{1,3}$/)
-    .required()
-    .messages({
-        'string.pattern.base': 'Phone code must start with "+" followed by 1 to 3 digits.',
-        'any.required': 'Phone code is required.'
-    }),
+
+// phone_code: Joi.string()
+//     .pattern(/^\+\d{1,3}$/)
+//     .required()
+//     .messages({
+//         'string.pattern.base': 'Phone code must start with "+" followed by 1 to 3 digits.',
+//         'any.required': 'Phone code is required.'
+//     }),
     password: Joi.string().min(6).required().messages({
         'string.min': 'Password must be at least 6 characters long.',
         'any.required': 'Password is required.'
@@ -109,19 +111,19 @@ phone_code: Joi.string()
 
 export const forgetPasswordSchema = Joi.object({
     phone: Joi.string()
-        .pattern(/^\d{10}$/)
-        .required()
-        .messages({
-            'string.pattern.base': 'Phone number must contain only digits and be exactly 10 characters long.',
-            'any.required': 'Phone number is required.'
-        }),
-    phone_code: Joi.string()
-        .pattern(/^\+\d{1,3}$/)
-        .required()
-        .messages({
-            'string.pattern.base': 'Phone code must start with "+" followed by 1 to 3 digits.',
-            'any.required': 'Phone code is required.'
-        })
+    .pattern(/^\+?\d{10,15}$/) // Allows optional "+" followed by 10-15 digits
+    .required()
+    .messages({
+        'string.pattern.base': 'Phone number must start with an optional "+" and contain 10 to 15 digits.',
+        'any.required': 'Phone number is required.'
+    }),
+    // phone_code: Joi.string()
+    //     .pattern(/^\+\d{1,3}$/)
+    //     .required()
+    //     .messages({
+    //         'string.pattern.base': 'Phone code must start with "+" followed by 1 to 3 digits.',
+    //         'any.required': 'Phone code is required.'
+    //     })
 });
 
 

@@ -12,7 +12,7 @@ const userSchema = new Schema({
   last_name: { type: String, required: true, default: null },
   pronouns: { type: String, required: true, default: null },
   date_of_birth: { type: String, required: true, default: null },
-  phone_code: { type: String, required: true, default: null },
+  // phone_code: { type: String, required: true, default: null },
   phone: { type: String, required: true, unique: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true, default: null },

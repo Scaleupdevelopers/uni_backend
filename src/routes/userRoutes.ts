@@ -7,7 +7,9 @@ const router = express.Router();
 
 
 // ------------------------------ Onboarding Routes ----------------------//
-router.post("/signup",uploadLocalProfileImage, createUser);
+// router.post("/signup",uploadLocalProfileImage, createUser);
+router.post("/signup",uploadS3ProfileImage, createUser);
+
 router.post("/verify-otp", verifyOtp);
 router.post("/complete-profile",decodeJWTToken, completeProfile);
 router.post("/login", loginUser);

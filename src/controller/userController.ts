@@ -118,10 +118,10 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
     }
 
     try {
-        const { email, password, first_name, last_name, phone, phone_code, date_of_birth, pronouns, device_id, device_token, device_type, timezone } = req.body;
+        const { email, password, first_name, last_name, phone, date_of_birth, pronouns, device_id, device_token, device_type, timezone } = req.body;
 
 
-        const checkUserSignupComplete = await User.findOne({ phone, phone_code, email, is_signup_complete: true });
+        const checkUserSignupComplete = await User.findOne({ phone, email, is_signup_complete: true });
         console.log(checkUserSignupComplete, 'complete')
         if (checkUserSignupComplete) {
             return res.status(400).json({
@@ -155,17 +155,17 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
         }
 
         //---------------------------- For Local Upload image---------------------------------//
-        console.log(req.file, req.body, 'body');
-        if (!req.file) {
-            return res.status(400).json({
-                status: false,
-                message: "Profile image is required.",
-                data: {
-                    error: "Profile image is required."
-                }
-            });
-        }
-        const profileImageName = req.file?.filename;
+        // console.log(req.file, req.body, 'body');
+        // if (!req.file) {
+        //     return res.status(400).json({
+        //         status: false,
+        //         message: "Profile image is required.",
+        //         data: {
+        //             error: "Profile image is required."
+        //         }
+        //     });
+        // }
+        // const profileImageName = req.file?.filename;
 
         //---------------------------- For Local Upload image---------------------------------//
 
@@ -173,20 +173,20 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
         //---------------------- For AWS S3 Upload Image-----------------------------//
 
 
-        // const file = req.file as Express.MulterS3File;
+        const file = req.file as Express.MulterS3File;
 
 
-        // if (!file || !file.location) {
-        //     return res.status(400).json({
-        //         status: false,
-        //         message: "Profile image is required.",
-        //         data: {
-        //             error: "Profile image is required or upload failed.",
-        //         },
-        //     });
-        // }
+        if (!file || !file.location) {
+            return res.status(400).json({
+                status: false,
+                message: "Profile image is required.",
+                data: {
+                    error: "Profile image is required or upload failed.",
+                },
+            });
+        }
 
-        // const profileImageName = req.file?.location ;  
+        const profileImageName = file?.location ;  
 
         //---------------------- For AWS S3 bucket name.-----------------------------//
 
@@ -194,7 +194,7 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
 
         
 
-        const checkUserExistOrNot = await User.findOne({ phone, phone_code, email, is_signup_complete: false });
+        const checkUserExistOrNot = await User.findOne({ phone, email, is_signup_complete: false });
 
         let savedUser;
         const otp = Math.floor(100000 + Math.random() * 900000);
@@ -225,7 +225,6 @@ export const createUser = async (req: Request, res: Response): Promise<any> => {
                 last_name,
                 email,
                 phone,
-                phone_code,
                 date_of_birth,
                 pronouns,
                 device_id,
@@ -284,11 +283,11 @@ export const verifyOtp = async (req: Request, res: Response): Promise<any> => {
         });
     }
 
-    const { phone, phone_code, otp } = req.body;
+    const { phone, otp } = req.body;
 
     try {
         // Find user with matching phone and phone_code
-        const user = await User.findOne({ phone, phone_code });
+        const user = await User.findOne({ phone });
 
         if (!user) {
             return res.status(404).json({
@@ -754,11 +753,11 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
         });
     }
     try {
-        const { phone_code, phone, password } = req.body;
+        const {  phone, password } = req.body;
 
-        console.log(phone_code, phone, password, 'password');
+        console.log( phone, password, 'password');
 
-        const userFind = await User.findOne({ phone_code, phone, is_signup_complete: false });
+        const userFind = await User.findOne({  phone, is_signup_complete: false });
         if (userFind) {
             return res.status(404).json({
                 status: false,
@@ -770,7 +769,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
         }
 
        
-        const user = await User.findOne({ phone_code, phone, is_signup_complete: true });
+        const user = await User.findOne({ phone, is_signup_complete: true });
         if (!user) {
             return res.status(404).json({
                 status: false,
@@ -886,11 +885,11 @@ export const forgotPassword = async (req: Request, res: Response): Promise<any> 
         });
     }
 
-    const { phone, phone_code } = req.body;
+    const { phone } = req.body;
 
     try {
       
-        const user = await User.findOne({ phone, phone_code, is_signup_complete: true });
+        const user = await User.findOne({ phone, is_signup_complete: true });
 
         if (!user) {
             return res.status(404).json({
@@ -948,11 +947,11 @@ export const forgotVerifyOtp = async (req: Request, res: Response): Promise<any>
         });
     }
 
-    const { phone, phone_code, otp } = req.body;
+    const { phone, otp } = req.body;
 
     try {
      
-        const user = await User.findOne({ phone, phone_code });
+        const user = await User.findOne({ phone });
 
         if (!user) {
             return res.status(404).json({
@@ -1390,7 +1389,7 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<an
         const userId = req.user.id;
         console.log(userId, 'id')
         const allowedFields = [
-            "first_name", "last_name", "pronouns", "date_of_birth", "phone_code", "phone", "email",
+            "first_name", "last_name", "pronouns", "date_of_birth", "phone", "email",
             , "profile_pic", "favourite_genre", "favourite_interest",
             "zodiac_sign", "college", "major", "graduating_year", "clubs", "relationship_status", "favorite_artist",
             "favorite_sports_team", "favorite_place_to_go", "facebook", "instagram", "twitter", "linkedin", "snapchat", "bio"
@@ -1499,7 +1498,7 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<an
                 last_name: user.last_name,
                 pronouns: user.pronouns,
                 date_of_birth: user.date_of_birth,
-                phone_code: user.phone_code,
+                // phone_code: user.phone_code,
                 phone: user.phone,
                 email: user.email,
                 profile_pic: user.profile_pic,
