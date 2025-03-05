@@ -337,7 +337,7 @@ export const verifyOtp = async (req: Request, res: Response): Promise<any> => {
         const token = jwt.sign(
             { id: user._id, phone: user.phone },
             JWT_SECRET as string,
-            { expiresIn: JWT_EXPIRES_IN }
+            // { expiresIn: JWT_EXPIRES_IN }
         );
 
         return res.status(200).json({
@@ -800,7 +800,7 @@ export const loginUser = async (req: Request, res: Response): Promise<any> => {
         const token = jwt.sign(
             { id: user._id, phone: user.phone },
             JWT_SECRET as string,
-            { expiresIn: JWT_EXPIRES_IN }
+            // { expiresIn: JWT_EXPIRES_IN }
         );
 
 
