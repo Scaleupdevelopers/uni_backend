@@ -992,12 +992,12 @@ export const forgotVerifyOtp = async (req: Request, res: Response): Promise<any>
         user.updated_at = new Date();
         await user.save();
 
-        console.log(JWT_EXPIRES_IN, 'in')
+        // console.log(JWT_EXPIRES_IN, 'in')
       
         const token = jwt.sign(
             { id: user._id, phone: user.phone },
-            JWT_SECRET as string,
-            { expiresIn: JWT_EXPIRES_IN }
+            JWT_SECRET as string
+            // { expiresIn: JWT_EXPIRES_IN }
         );
 
         return res.status(200).json({
