@@ -1,0 +1,107 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// new model of user from 28 may 2025.
+
+
+enum UserCode {
+  UNIVIP
+  NORMAL
+}
+
+model User {
+  id                            Int                       @id @default(autoincrement())
+  email                         String?
+  emailVerified                 Boolean                   @default(false)
+  emailVerificationToken        String?
+  password                      String?
+  firstName                     String?
+  lastName                      String?
+  phoneNumber                   String                    @unique
+  dob                           DateTime?
+  pronouns                      Pronouns?
+  profileImage                  String?
+  passwordChangedAt             DateTime?                  @default(now())
+  passwordResetToken            String?
+  passwordResetExpires          DateTime?
+  active                        Boolean                   @default(true)
+  role                          Role                      @default(User)
+  createdAt                     DateTime                  @default(now())
+  updatedAt                     DateTime                  @updatedAt
+  currentAuthToken              String?
+  phoneVerificationToken        String?
+  phoneVerified                 Boolean                   @default(false)
+  phoneVerificationTokenExpires DateTime?
+  preferences                   Json?
+  isRegistrationComplete        Boolean                   @default(false)
+  lat                           Float?
+  long                          Float?
+  isProfilePublic               Boolean                   @default(true)
+  fcmToken                      String?
+  createdEvents                 Event[]                   @relation("EventCreatedBy")
+  eventAttendances              EventAttendance[]
+
+  // 🔽 New fields added below
+  // username                      String?
+  uniqueCode                    UserCode?
+  userRegistrationNo            Int                       @default(autoincrement())
+  isEmailSent                   Boolean                   @default(false)
+  aiSearchCount                 Int                       @default(0)
+   isLimitCrossed               Boolean                   @default(false)
+}
+
+
+model EventAttendance {
+  id         String   @id @default(uuid())
+  eventId    String
+  externalId String
+  userId     Int
+  createdAt  DateTime @default(now())
+  isGoing    Boolean  @default(false)
+  isLiked    Boolean  @default(false)
+  isShare   Boolean  @default(false)
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@unique([eventId, userId])
+}
+
+model Event {
+  id               String            @id @default(uuid())
+  name             String
+  description      String?
+  dateTime         DateTime?
+  image            String?
+  source           String?
+  location         String?
+  ageMin           Int?
+  ageMax           Int?
+  latitude  Float?
+longitude Float?
+  ticketUrls       String[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  preferences      Json?
+  userId           Int?
+  externalId       String?           @unique
+  createdBy        User?             @relation("EventCreatedBy", fields: [userId], references: [id])
+  eventAttendances EventAttendance[]
+}
+
+enum Role {
+  Admin
+  User
+}
+
+enum Pronouns {
+  he_him
+  she_her
+  they_them
+  other
+}
